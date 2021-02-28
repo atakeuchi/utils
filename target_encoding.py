@@ -1,4 +1,6 @@
-#%%
+import numpy as np
+import pandas as pd
+
 class BaysianTargetEncoder():
     """
     group_cols: string or list of column names 
@@ -9,9 +11,7 @@ class BaysianTargetEncoder():
     prior_cols: None or list of column names 
     values to be used as prior. If list, mean of the variables will be used as prior. If none, sample mean of target will be used as prior
     """
-    import numpy as np
-    import pandas as pd
-
+    
     def __init__(self, group_cols, target_col="target", prior_cols=None):
         self.group_cols = group_cols
         self.target_col = target_col
@@ -76,11 +76,9 @@ class BaysianTargetEncoder():
         values = np.array([mapper.get(k) for k in keys]).astype(float)
         
         if self.prior_cols is None:
-            df['prior'] = self.p
+            values[~np.isfinite(values)] = self.p
         else:
-            df['prior'] = self.prior[df[self.prior_cols]]
-        df['prior'].fillna(self.p)
-        values[~np.isfinite(values)] = df.loc[~np.isfinite(values),'prior']
+            values[~np.isfinite(values)] = df.loc[~np.isfinite(values),self.prior_cols].mean(1)
         
         return values
     
@@ -88,7 +86,6 @@ class BaysianTargetEncoder():
         self.fit(df)
         return self.transform(df, *args, **kwargs)
 
-#%%
 
 class KfoldTargetEncoder():
     """
